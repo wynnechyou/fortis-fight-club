@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import type { FighterState } from '../types/game';
 import { ANIMATION_FRAMES, type AnimationState } from '../constants/spriteConfig';
+import { getAssetPath } from '../utils/assetPath';
 
 interface FighterProps {
   fighter: FighterState;
@@ -42,7 +43,7 @@ export default function Fighter({ fighter, scale = 1.5, damageFlash = false }: F
 
   // Load sprite image and calculate frame dimensions
   useEffect(() => {
-    const spritePath = `/${fighter.character.sprite}`;
+    const spritePath = getAssetPath(fighter.character.sprite);
     console.log(`[Fighter] Loading sprite for ${fighter.character.name}: ${spritePath}`);
     const img = new Image();
 
@@ -54,10 +55,14 @@ export default function Fighter({ fighter, scale = 1.5, damageFlash = false }: F
       const framesPerRow = 3;
       const totalRows = 5;
 
-      const frameWidth = Math.floor(img.width / framesPerRow);
-      const frameHeight = Math.floor(img.height / totalRows);
+      // Handle sprite sheets with uneven dimensions
+      // Use exact pixel division (floating point for precise extraction)
+      const frameWidth = img.width / framesPerRow;
+      const frameHeight = img.height / totalRows;
 
-      console.log(`[Fighter] Frame size: ${frameWidth}x${frameHeight}`);
+      console.log(`[Fighter] Image size: ${img.width}x${img.height}`);
+      console.log(`[Fighter] Frame size: ${frameWidth.toFixed(2)}x${frameHeight.toFixed(2)}`);
+      console.log(`[Fighter] Character: ${fighter.character.name}`);
 
       setFrameSize({ width: frameWidth, height: frameHeight });
       imageRef.current = img;
@@ -118,11 +123,14 @@ export default function Fighter({ fighter, scale = 1.5, damageFlash = false }: F
     const img = imageRef.current;
     if (!canvas || !img || !imageLoaded || frameSize.width === 0) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
-    // Clear canvas
+    // Clear canvas with full transparency
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Ensure global composite operation preserves transparency
+    ctx.globalCompositeOperation = 'source-over';
 
     // Calculate source position in sprite sheet
     const col = animConfig.startCol + currentFrame;
@@ -211,13 +219,17 @@ export default function Fighter({ fighter, scale = 1.5, damageFlash = false }: F
         transform: 'translateX(-50%)',
       }}
     >
-      <div className="relative">
+      <div className="relative" style={{ background: 'transparent' }}>
         <canvas
           ref={canvasRef}
           width={frameSize.width * scale}
           height={frameSize.height * scale}
-          className={fighter.currentAction === 'BLOCKING' ? 'opacity-70' : ''}
-          style={{ imageRendering: 'pixelated' }}
+          className={`fighter-canvas ${fighter.currentAction === 'BLOCKING' ? 'opacity-70' : ''}`}
+          style={{
+            imageRendering: 'pixelated',
+            background: 'transparent',
+            display: 'block'
+          }}
         />
         {/* Damage flash overlay */}
         {damageFlash && (

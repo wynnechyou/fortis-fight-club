@@ -1,9 +1,11 @@
+import { getAssetPath } from '../utils/assetPath';
+
 export default function LoadingScreen() {
   return (
     <div
       className="game-screen flex items-center justify-center"
       style={{
-        backgroundImage: 'url(/background_fortis.png)',
+        backgroundImage: `url(${getAssetPath('background_fortis.png')})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -14,7 +16,7 @@ export default function LoadingScreen() {
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center gap-6">
         <img
-          src="/FortisLogo.avif"
+          src={getAssetPath('FortisLogo.avif')}
           alt="Fortis Games"
           className="w-64 h-auto drop-shadow-2xl"
         />

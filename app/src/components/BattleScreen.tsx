@@ -5,6 +5,7 @@ import { useKeyboardInput, type InputState } from '../hooks/useKeyboardInput';
 import { processCombat, getAttackParticleColor } from '../engine/combat';
 import { getAiAction, getAiMovement, getAiReactionDelay } from '../engine/ai';
 import Fighter from './Fighter';
+import { getAssetPath } from '../utils/assetPath';
 
 interface BattleScreenProps {
   gameData: GameData;
@@ -403,7 +404,7 @@ export default function BattleScreen({ gameData }: BattleScreenProps) {
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: 'url(/background_fortis.png)',
+          backgroundImage: `url(${getAssetPath('background_fortis.png')})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',

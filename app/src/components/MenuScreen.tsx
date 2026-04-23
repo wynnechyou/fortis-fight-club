@@ -1,4 +1,5 @@
 import { useGame } from '../context/GameContext';
+import { getAssetPath } from '../utils/assetPath';
 
 export default function MenuScreen() {
   const { dispatch } = useGame();
@@ -7,7 +8,7 @@ export default function MenuScreen() {
     <div
       className="game-screen flex flex-col items-center justify-center gap-8"
       style={{
-        backgroundImage: 'url(/background_fortis.png)',
+        backgroundImage: `url(${getAssetPath('background_fortis.png')})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -20,7 +21,7 @@ export default function MenuScreen() {
         {/* Logo */}
         <div className="flex flex-col items-center gap-4">
           <img
-            src="/FortisLogo.avif"
+            src={getAssetPath('FortisLogo.avif')}
             alt="Fortis Games"
             className="w-80 h-auto drop-shadow-2xl"
             onError={(e) => {
