@@ -13,7 +13,8 @@ export async function loadCsv(
   path: string,
   requiredColumns?: string[]
 ): Promise<CsvRow[]> {
-  const res = await fetch(`/${path}`);
+  const baseUrl = import.meta.env.BASE_URL;
+  const res = await fetch(`${baseUrl}${path}`);
   if (!res.ok) throw new Error(`Failed to load ${path}: ${res.status}`);
   const text = await res.text();
   const lines = text.trim().split("\n");
