@@ -18,15 +18,22 @@ export default function LoadingScreen() {
           alt="Fortis Games"
           className="w-64 h-auto drop-shadow-2xl"
         />
-        <h1 className="text-4xl font-bold text-white mb-4" style={{
-          textShadow: '4px 4px 8px rgba(0,0,0,0.8)',
-          background: 'linear-gradient(to bottom, #FFD700, #FF8C00)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}>
-          FORTIS FIGHTERS
-        </h1>
+        <div className="text-center">
+          <h1 className="text-5xl font-bold text-white mb-3" style={{
+            textShadow: '4px 4px 8px rgba(0,0,0,0.8)',
+            background: 'linear-gradient(to bottom, #FFD700, #FF8C00)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>
+            FORTIS FIGHT CLUB
+          </h1>
+          <p className="text-white text-lg font-semibold mb-4" style={{
+            textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
+          }}>
+            Settle it outside of the meeting room...
+          </p>
+        </div>
         <div className="h-16 w-16 animate-spin rounded-full border-4 border-gray-600 border-t-orange-500"></div>
         <p className="text-white text-lg" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
           Loading game data...

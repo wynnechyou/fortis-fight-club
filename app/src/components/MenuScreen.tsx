@@ -44,12 +44,12 @@ export default function MenuScreen() {
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
           }}>
-            FORTIS FIGHTERS
+            FORTIS FIGHT CLUB
           </h1>
           <p className="text-white text-xl font-semibold" style={{
             textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
           }}>
-            The Ultimate Showdown
+            Settle it outside of the meeting room...
           </p>
         </div>
 
