@@ -1,0 +1,11 @@
+key,value
+base_attack_damage,10
+block_damage_reduction,0.5
+attack_duration_ms,300
+block_duration_ms,500
+ai_reaction_min_ms,800
+ai_reaction_max_ms,2000
+ai_attack_weight,40
+ai_block_weight,30
+ai_special_weight,20
+ai_idle_weight,10

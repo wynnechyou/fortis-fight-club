@@ -6,8 +6,8 @@
 
 :root {
   --app-height: 100dvh;
-  --app-max-width: 400px;
-  --app-max-height: 800px;
+  --app-max-width: 1400px;
+  --app-max-height: 900px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -53,22 +53,39 @@ body {
 }
 
 /* ── App viewport ──────────────────────────────────────── */
-/* app-shell: the phone-shaped frame. Capped at max-width/max-height,
-   centered on desktop. Fills the screen on mobile. Black body
-   background shows around the frame on desktop like a phone bezel. */
+/* app-shell: landscape game container that fills most of the screen
+   on desktop, centered with max constraints */
 
 .app-shell {
-  max-width: var(--app-max-width, 400px);
-  height: var(--game-height, var(--app-height, 100vh));
-  min-height: var(--game-height, var(--app-height, 100vh));
+  width: 95vw;
+  max-width: var(--app-max-width, 1400px);
+  height: 90vh;
+  max-height: var(--app-max-height, 900px);
   background: var(--bg);
-  padding-top: calc(0.375rem + var(--safe-top));
-  padding-bottom: calc(0.375rem + var(--safe-bottom));
-  padding-left: calc(0.5rem + var(--safe-left, 0px));
-  padding-right: calc(0.5rem + var(--safe-right, 0px));
-  margin-top: max(0px, calc((var(--app-height, 100vh) - var(--game-height, 100vh)) / 2));
-  margin-bottom: max(0px, calc((var(--app-height, 100vh) - var(--game-height, 100vh)) / 2));
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.06);
+  padding: 0;
+  margin: auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Mobile override: fill screen on small devices */
+@media (max-width: 768px) {
+  .app-shell {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    top: 0;
+    left: 0;
+    transform: none;
+    position: fixed;
+  }
 }
 
 /* game-screen: fills the app-shell, use as the content container */

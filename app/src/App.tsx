@@ -1,22 +1,34 @@
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect } from "react";
+import { GameProvider, useGame } from "./context/GameContext";
+import { useGameData } from "./hooks/useGameData";
+import LoadingScreen from "./components/LoadingScreen";
+import ErrorScreen from "./components/ErrorScreen";
+import MenuScreen from "./components/MenuScreen";
+import CharacterSelectScreen from "./components/CharacterSelectScreen";
+import BattleScreen from "./components/BattleScreen";
+import GameOverOverlay from "./components/GameOverOverlay";
+
+function GameContent() {
+  const { loading, error, data } = useGameData();
+  const { state } = useGame();
+
+  if (loading) return <LoadingScreen />;
+  if (error) return <ErrorScreen error={error} />;
+  if (!data) return <ErrorScreen error={new Error("No data loaded")} />;
+
+  return (
+    <>
+      {state.phase === 'MENU' && <MenuScreen />}
+      {state.phase === 'CHARACTER_SELECT' && (
+        <CharacterSelectScreen characters={data.characters} />
+      )}
+      {state.phase === 'BATTLE' && <BattleScreen gameData={data} />}
+      {state.phase === 'GAME_OVER' && <GameOverOverlay />}
+    </>
+  );
+}
 
 export default function App() {
-  const [config, setConfig] = useState<Map<string, string>>(new Map());
-
-  useEffect(() => {
-    fetch("/config.csv")
-      .then((r) => r.text())
-      .then((text) => {
-        const lines = text.trim().split("\n").slice(1);
-        const map = new Map<string, string>();
-        for (const line of lines) {
-          const [key, ...rest] = line.split(",");
-          map.set(key.trim(), rest.join(",").trim());
-        }
-        setConfig(map);
-      });
-  }, []);
-
   // ── Viewport management ──────────────────────────────────
   // Keeps --app-height, --game-height, --game-width in sync with the
   // real visible area. Handles mobile URL bar show/hide, keyboard popup,
@@ -54,18 +66,10 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app-shell relative mx-auto flex w-full flex-col overflow-hidden">
-      <div className="game-screen flex flex-col items-center justify-center gap-6">
-        {/* Replace with your logo: drop an image in data/sprites/logo.png */}
-        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-          <span className="text-white text-4xl font-bold">?</span>
-        </div>
-        <h1 className="text-2xl font-bold ink-strong">
-          {config.get("app_name") || "Loading..."}
-        </h1>
-        <p className="text-sm ink-soft">v0.1.0</p>
-        <button className="ui-cta mt-4">Start</button>
+    <GameProvider>
+      <div className="app-shell relative mx-auto flex w-full flex-col overflow-hidden">
+        <GameContent />
       </div>
-    </div>
+    </GameProvider>
   );
 }
