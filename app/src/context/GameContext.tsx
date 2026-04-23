@@ -22,6 +22,8 @@ const initialState: GameState = {
     particles: [],
   },
   winner: null,
+  battleTimer: 120000, // 120 seconds in milliseconds
+  damageTaken: 0,
 };
 
 // Helper to create fighter state from character
@@ -62,6 +64,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         phase: 'BATTLE',
+        battleTimer: 120000, // Reset to 120 seconds
+        damageTaken: 0, // Reset damage taken
       };
     }
 
@@ -93,8 +97,15 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
       const newHealth = Math.max(0, fighter.health - action.damage);
 
+      // Track damage taken by player
+      const newDamageTaken = action.fighter === 'player'
+        ? state.damageTaken + action.damage
+        : state.damageTaken;
+
       // Check for knockout
       if (newHealth === 0) {
+        const winner = action.fighter === 'player' ? 'ai' : 'player';
+
         return {
           ...state,
           [fighterKey]: {
@@ -102,8 +113,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             health: 0,
             currentAction: 'KNOCKED_DOWN' as const,
           },
-          winner: action.fighter === 'player' ? 'ai' : 'player',
-          phase: 'GAME_OVER',
+          winner,
+          phase: winner === 'player' ? 'LEADERBOARD' : 'GAME_OVER',
+          damageTaken: newDamageTaken,
         };
       }
 
@@ -115,6 +127,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           currentAction: 'HIT_STUN' as const,
           actionTimer: 100, // 100ms hit stun
         },
+        damageTaken: newDamageTaken,
       };
     }
 
@@ -167,6 +180,32 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
       return newState;
     }
+
+    case 'UPDATE_BATTLE_TIMER': {
+      const { deltaTime } = action;
+      const newBattleTimer = Math.max(0, state.battleTimer - deltaTime);
+
+      // If timer runs out, player loses
+      if (newBattleTimer === 0 && state.battleTimer > 0) {
+        return {
+          ...state,
+          battleTimer: 0,
+          winner: 'ai',
+          phase: 'GAME_OVER',
+        };
+      }
+
+      return {
+        ...state,
+        battleTimer: newBattleTimer,
+      };
+    }
+
+    case 'SHOW_LEADERBOARD':
+      return {
+        ...state,
+        phase: 'LEADERBOARD',
+      };
 
     case 'SPAWN_PARTICLES': {
       const newParticles: Particle[] = [];
@@ -302,6 +341,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         aiFighter: null,
         visualEffects: initialState.visualEffects,
         winner: null,
+        battleTimer: 120000,
+        damageTaken: 0,
       };
 
     case 'RETURN_TO_MENU':

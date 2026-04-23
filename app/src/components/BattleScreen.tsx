@@ -357,6 +357,7 @@ export default function BattleScreen({ gameData }: BattleScreenProps) {
 
       // Update timers
       dispatch({ type: 'UPDATE_TIMERS', deltaTime });
+      dispatch({ type: 'UPDATE_BATTLE_TIMER', deltaTime });
       dispatch({ type: 'UPDATE_PARTICLES', deltaTime });
       dispatch({ type: 'UPDATE_SCREEN_SHAKE', deltaTime });
 
@@ -409,28 +410,46 @@ export default function BattleScreen({ gameData }: BattleScreenProps) {
         }}
       />
 
-      {/* Health bars */}
-      <div className="absolute top-4 left-4 right-4 flex gap-4 z-10">
-        <div className="flex-1">
-          <div className="text-white text-sm mb-1">{state.playerFighter.character.name}</div>
-          <div className="h-6 bg-black bg-opacity-50 rounded-full overflow-hidden border-2 border-white">
-            <div
-              className="h-full bg-green-500 transition-all duration-300"
-              style={{
-                width: `${(state.playerFighter.health / state.playerFighter.maxHealth) * 100}%`,
-              }}
-            />
+      {/* Health bars and timer/score */}
+      <div className="absolute top-4 left-4 right-4 z-10">
+        <div className="flex gap-4 mb-2">
+          <div className="flex-1">
+            <div className="text-white text-sm mb-1">{state.playerFighter.character.name}</div>
+            <div className="h-6 bg-black bg-opacity-50 rounded-full overflow-hidden border-2 border-white">
+              <div
+                className="h-full bg-green-500 transition-all duration-300"
+                style={{
+                  width: `${(state.playerFighter.health / state.playerFighter.maxHealth) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="text-white text-sm mb-1 text-right">{state.aiFighter.character.name}</div>
+            <div className="h-6 bg-black bg-opacity-50 rounded-full overflow-hidden border-2 border-white">
+              <div
+                className="h-full bg-green-500 transition-all duration-300 ml-auto"
+                style={{
+                  width: `${(state.aiFighter.health / state.aiFighter.maxHealth) * 100}%`,
+                }}
+              />
+            </div>
           </div>
         </div>
-        <div className="flex-1">
-          <div className="text-white text-sm mb-1 text-right">{state.aiFighter.character.name}</div>
-          <div className="h-6 bg-black bg-opacity-50 rounded-full overflow-hidden border-2 border-white">
-            <div
-              className="h-full bg-green-500 transition-all duration-300 ml-auto"
-              style={{
-                width: `${(state.aiFighter.health / state.aiFighter.maxHealth) * 100}%`,
-              }}
-            />
+
+        {/* Timer and Score */}
+        <div className="flex justify-center gap-6">
+          <div className="bg-black bg-opacity-70 text-white px-4 py-2 rounded">
+            <div className="text-xs text-gray-400">Time</div>
+            <div className="text-xl font-bold">
+              {Math.ceil(state.battleTimer / 1000)}s
+            </div>
+          </div>
+          <div className="bg-black bg-opacity-70 text-white px-4 py-2 rounded">
+            <div className="text-xs text-gray-400">Damage</div>
+            <div className="text-xl font-bold text-red-400">
+              {Math.floor(state.damageTaken)}
+            </div>
           </div>
         </div>
       </div>

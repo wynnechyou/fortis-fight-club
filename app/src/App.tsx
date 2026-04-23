@@ -7,6 +7,8 @@ import MenuScreen from "./components/MenuScreen";
 import CharacterSelectScreen from "./components/CharacterSelectScreen";
 import BattleScreen from "./components/BattleScreen";
 import GameOverOverlay from "./components/GameOverOverlay";
+import LeaderboardScreen from "./components/LeaderboardScreen";
+import type { BattleStats } from "./types/game";
 
 function GameContent() {
   const { loading, error, data } = useGameData();
@@ -16,6 +18,13 @@ function GameContent() {
   if (error) return <ErrorScreen error={error} />;
   if (!data) return <ErrorScreen error={new Error("No data loaded")} />;
 
+  // Calculate battle stats for leaderboard
+  const battleStats: BattleStats = {
+    timeRemaining: Math.floor(state.battleTimer / 1000),
+    damageTaken: state.damageTaken,
+    score: 0, // Calculated in LeaderboardScreen
+  };
+
   return (
     <>
       {state.phase === 'MENU' && <MenuScreen />}
@@ -23,6 +32,7 @@ function GameContent() {
         <CharacterSelectScreen characters={data.characters} />
       )}
       {state.phase === 'BATTLE' && <BattleScreen gameData={data} />}
+      {state.phase === 'LEADERBOARD' && <LeaderboardScreen battleStats={battleStats} />}
       {state.phase === 'GAME_OVER' && <GameOverOverlay />}
     </>
   );

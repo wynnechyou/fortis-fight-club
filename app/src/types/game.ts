@@ -1,7 +1,7 @@
 // Core game types for Office Fighter
 
 // Game phases
-export type GamePhase = 'MENU' | 'CHARACTER_SELECT' | 'BATTLE' | 'GAME_OVER';
+export type GamePhase = 'MENU' | 'CHARACTER_SELECT' | 'BATTLE' | 'LEADERBOARD' | 'GAME_OVER';
 
 // Fighter action states
 export type FighterAction = 'IDLE' | 'ATTACKING' | 'BLOCKING' | 'SPECIAL' | 'JUMPING' | 'HIT_STUN' | 'KNOCKED_DOWN';
@@ -90,6 +90,13 @@ export interface VisualEffects {
   particles: Particle[];
 }
 
+// Battle statistics for scoring
+export interface BattleStats {
+  timeRemaining: number; // seconds
+  damageTaken: number;
+  score: number;
+}
+
 // Complete game state
 export interface GameState {
   phase: GamePhase;
@@ -98,6 +105,8 @@ export interface GameState {
   aiFighter: FighterState | null;
   visualEffects: VisualEffects;
   winner: 'player' | 'ai' | null;
+  battleTimer: number; // milliseconds remaining
+  damageTaken: number; // total damage player has taken
 }
 
 // Game actions for reducer
@@ -110,6 +119,7 @@ export type GameAction =
   | { type: 'APPLY_DAMAGE'; fighter: 'player' | 'ai'; damage: number }
   | { type: 'SET_FIGHTER_ACTION'; fighter: 'player' | 'ai'; action: FighterAction; duration?: number }
   | { type: 'UPDATE_TIMERS'; deltaTime: number }
+  | { type: 'UPDATE_BATTLE_TIMER'; deltaTime: number }
   | { type: 'SPAWN_PARTICLES'; x: number; y: number; count: number; color: string }
   | { type: 'TRIGGER_SCREEN_SHAKE' }
   | { type: 'TRIGGER_DAMAGE_FLASH'; fighter: 'player' | 'ai' }
@@ -117,6 +127,7 @@ export type GameAction =
   | { type: 'UPDATE_PARTICLES'; deltaTime: number }
   | { type: 'UPDATE_SCREEN_SHAKE'; deltaTime: number }
   | { type: 'GAME_OVER'; winner: 'player' | 'ai' }
+  | { type: 'SHOW_LEADERBOARD'; stats: BattleStats }
   | { type: 'RESTART_BATTLE' }
   | { type: 'RETURN_TO_MENU' };
 
