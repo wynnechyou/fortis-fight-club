@@ -25,6 +25,7 @@ export interface FighterState {
   health: number;
   maxHealth: number;
   position: { x: number; y: number };
+  velocity: { x: number; y: number }; // For jumping/physics
   currentAction: FighterAction;
   actionTimer: number; // ms remaining in current action
   specialCooldown: number; // ms until special available

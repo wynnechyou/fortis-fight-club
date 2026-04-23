@@ -15,7 +15,23 @@ export default function BattleScreen({ gameData }: BattleScreenProps) {
   const gameLoopRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const aiDecisionTimerRef = useRef<number>(0);
-  const aiReactionDelayRef = useRef<number>(800);
+  const aiReactionDelayRef = useRef<number>(150);
+  const aiMovementTimerRef = useRef<number>(0);
+  const aiMovementDirectionRef = useRef<'left' | 'right'>(Math.random() < 0.5 ? 'left' : 'right');
+  const inputStateRef = useRef<InputState>({
+    ArrowLeft: false,
+    ArrowRight: false,
+    ArrowUp: false,
+    ArrowDown: false,
+    a: false,
+    s: false,
+    d: false,
+    w: false,
+    space: false,
+    shift: false,
+    leftClick: false,
+    rightClick: false,
+  });
 
   // Initialize fighters on mount
   useEffect(() => {
@@ -23,124 +39,32 @@ export default function BattleScreen({ gameData }: BattleScreenProps) {
       const playerChar = gameData.characters.find(
         (c) => c.id === state.selectedCharacterId
       );
-      // Pick random AI character (not the same as player)
-      const aiChars = gameData.characters.filter(
+
+      // Pick random AI character (different from player if possible)
+      let aiChars = gameData.characters.filter(
         (c) => c.id !== state.selectedCharacterId
       );
+
+      // If only one character exists, use same character for AI
+      if (aiChars.length === 0) {
+        aiChars = gameData.characters;
+      }
+
       const aiChar = aiChars[Math.floor(Math.random() * aiChars.length)];
 
       if (playerChar && aiChar) {
+        console.log('[BattleScreen] Initializing fighters:', playerChar.name, 'vs', aiChar.name);
         initializeFighters(playerChar, aiChar);
+      } else {
+        console.error('[BattleScreen] Failed to initialize fighters - playerChar:', playerChar, 'aiChar:', aiChar);
       }
     }
   }, [state.selectedCharacterId, state.playerFighter, gameData.characters, initializeFighters]);
 
-  // Handle input (keyboard + mouse)
-  const handleInput = useCallback(
-    (inputs: InputState) => {
-      if (!state.playerFighter) return;
-
-      const { currentAction, specialCooldown } = state.playerFighter;
-
-      // Can't take action during certain states
-      if (
-        currentAction === 'ATTACKING' ||
-        currentAction === 'SPECIAL' ||
-        currentAction === 'HIT_STUN' ||
-        currentAction === 'KNOCKED_DOWN'
-      ) {
-        return;
-      }
-
-      // Handle basic attack (Left Click)
-      if (inputs.leftClick && currentAction !== 'ATTACKING') {
-        dispatch({
-          type: 'SET_FIGHTER_ACTION',
-          fighter: 'player',
-          action: 'ATTACKING',
-          duration: gameData.combatConfig.attack_duration_ms,
-        });
-        return;
-      }
-
-      // Handle special attack (Right Click)
-      if (inputs.rightClick && currentAction !== 'SPECIAL' && specialCooldown === 0) {
-        dispatch({
-          type: 'SET_FIGHTER_ACTION',
-          fighter: 'player',
-          action: 'SPECIAL',
-          duration: gameData.combatConfig.attack_duration_ms * 1.5,
-        });
-        dispatch({
-          type: 'UPDATE_FIGHTER_STATE',
-          fighter: 'player',
-          state: { specialCooldown: state.playerFighter.character.specialCooldown },
-        });
-        return;
-      }
-
-      // Handle block (Shift)
-      if (inputs.shift) {
-        if (currentAction !== 'BLOCKING') {
-          dispatch({
-            type: 'SET_FIGHTER_ACTION',
-            fighter: 'player',
-            action: 'BLOCKING',
-            duration: gameData.combatConfig.block_duration_ms,
-          });
-        }
-        return;
-      }
-
-      // Handle jump (Space)
-      if (inputs.space && currentAction !== 'JUMPING') {
-        // TODO: Implement jump mechanics
-        // For now, just a placeholder
-      }
-
-      // Handle movement (WASD or Arrow keys)
-      const MOVE_SPEED = 3;
-      let moved = false;
-
-      if (inputs.ArrowLeft || inputs.a) {
-        const newX = Math.max(100, state.playerFighter.position.x - MOVE_SPEED);
-        dispatch({
-          type: 'UPDATE_FIGHTER_STATE',
-          fighter: 'player',
-          state: {
-            position: { ...state.playerFighter.position, x: newX },
-            facingRight: false,
-          },
-        });
-        moved = true;
-      } else if (inputs.ArrowRight || inputs.d) {
-        const newX = Math.min(1200, state.playerFighter.position.x + MOVE_SPEED);
-        dispatch({
-          type: 'UPDATE_FIGHTER_STATE',
-          fighter: 'player',
-          state: {
-            position: { ...state.playerFighter.position, x: newX },
-            facingRight: true,
-          },
-        });
-        moved = true;
-      }
-
-      // Vertical movement (for future implementation)
-      if (inputs.ArrowUp || inputs.w) {
-        // TODO: Implement upward movement or jump
-      }
-      if (inputs.ArrowDown || inputs.s) {
-        // TODO: Implement downward movement or crouch
-      }
-
-      // Return to idle if no movement and not in an action
-      if (!moved && currentAction === 'IDLE' && !inputs.shift && !inputs.leftClick && !inputs.rightClick) {
-        // Already idle, do nothing
-      }
-    },
-    [state.playerFighter, gameData.combatConfig, dispatch]
-  );
+  // Update input state ref
+  const handleInput = useCallback((inputs: InputState) => {
+    inputStateRef.current = inputs;
+  }, []);
 
   useKeyboardInput(handleInput);
 
@@ -154,12 +78,159 @@ export default function BattleScreen({ gameData }: BattleScreenProps) {
       const deltaTime = timestamp - lastTimeRef.current;
       lastTimeRef.current = timestamp;
 
-      // AI Decision Making
+      // Process player input and physics
+      if (state.playerFighter) {
+        const inputs = inputStateRef.current;
+        const { currentAction, specialCooldown, position, velocity } = state.playerFighter;
+
+        // Can take action unless in specific locked states
+        const canAct = !(
+          currentAction === 'ATTACKING' ||
+          currentAction === 'SPECIAL' ||
+          currentAction === 'HIT_STUN' ||
+          currentAction === 'KNOCKED_DOWN'
+        );
+
+        // Physics constants
+        const GRAVITY = -0.8; // Negative pulls toward ground (y=0)
+        const JUMP_VELOCITY = 18; // Positive jumps upward
+        const GROUND_Y = 0;
+
+        // Apply gravity
+        let newVelocityY = velocity.y + GRAVITY;
+        let newY = position.y + newVelocityY;
+
+        // Ground collision
+        if (newY <= GROUND_Y) {
+          newY = GROUND_Y;
+          newVelocityY = 0;
+        }
+
+        // Update position with physics
+        dispatch({
+          type: 'UPDATE_FIGHTER_STATE',
+          fighter: 'player',
+          state: {
+            position: { ...position, y: newY },
+            velocity: { ...velocity, y: newVelocityY },
+          },
+        });
+
+        if (canAct) {
+          // Handle basic attack (Left Click)
+          if (inputs.leftClick && currentAction !== 'ATTACKING') {
+            dispatch({
+              type: 'SET_FIGHTER_ACTION',
+              fighter: 'player',
+              action: 'ATTACKING',
+              duration: gameData.combatConfig.attack_duration_ms,
+            });
+          }
+          // Handle special attack (Right Click)
+          else if (inputs.rightClick && currentAction !== 'SPECIAL' && specialCooldown === 0) {
+            dispatch({
+              type: 'SET_FIGHTER_ACTION',
+              fighter: 'player',
+              action: 'SPECIAL',
+              duration: gameData.combatConfig.attack_duration_ms * 1.5,
+            });
+            dispatch({
+              type: 'UPDATE_FIGHTER_STATE',
+              fighter: 'player',
+              state: { specialCooldown: state.playerFighter.character.specialCooldown },
+            });
+          }
+          // Handle block (Shift)
+          else if (inputs.shift && currentAction !== 'BLOCKING') {
+            dispatch({
+              type: 'SET_FIGHTER_ACTION',
+              fighter: 'player',
+              action: 'BLOCKING',
+              duration: gameData.combatConfig.block_duration_ms,
+            });
+          }
+          // Handle jump (Space)
+          else if (inputs.space && position.y === GROUND_Y) {
+            dispatch({
+              type: 'UPDATE_FIGHTER_STATE',
+              fighter: 'player',
+              state: {
+                velocity: { ...velocity, y: JUMP_VELOCITY },
+              },
+            });
+          }
+          // Handle movement (WASD or Arrow keys)
+          else if (inputs.ArrowLeft || inputs.a) {
+            const newX = Math.max(100, state.playerFighter.position.x - 3);
+            dispatch({
+              type: 'UPDATE_FIGHTER_STATE',
+              fighter: 'player',
+              state: {
+                position: { ...state.playerFighter.position, x: newX },
+                facingRight: false,
+              },
+            });
+          } else if (inputs.ArrowRight || inputs.d) {
+            const newX = Math.min(1200, state.playerFighter.position.x + 3);
+            dispatch({
+              type: 'UPDATE_FIGHTER_STATE',
+              fighter: 'player',
+              state: {
+                position: { ...state.playerFighter.position, x: newX },
+                facingRight: true,
+              },
+            });
+          }
+        }
+      }
+
+      // AI Decision Making and Movement
       if (state.playerFighter && state.aiFighter) {
+        // AI combat decision timer
         aiDecisionTimerRef.current += deltaTime;
 
+        // AI movement direction change timer (every 2 seconds)
+        aiMovementTimerRef.current += deltaTime;
+        const MOVEMENT_CHANGE_INTERVAL = 2000; // 2 seconds
+
+        if (aiMovementTimerRef.current >= MOVEMENT_CHANGE_INTERVAL) {
+          // 50% chance to change direction
+          if (Math.random() < 0.5) {
+            aiMovementDirectionRef.current = aiMovementDirectionRef.current === 'left' ? 'right' : 'left';
+          }
+          aiMovementTimerRef.current = 0;
+        }
+
+        // Continuous AI movement (not tied to decision timer)
+        const AI_MOVE_SPEED = 3.5;
+        const newAiX =
+          aiMovementDirectionRef.current === 'left'
+            ? Math.max(100, state.aiFighter.position.x - AI_MOVE_SPEED)
+            : Math.min(1200, state.aiFighter.position.x + AI_MOVE_SPEED);
+
+        // Random jump while moving (5% chance per frame)
+        if (Math.random() < 0.05 && state.aiFighter.position.y === 0) {
+          dispatch({
+            type: 'UPDATE_FIGHTER_STATE',
+            fighter: 'ai',
+            state: {
+              velocity: { ...state.aiFighter.velocity, y: 18 },
+            },
+          });
+        }
+
+        // Update AI position
+        dispatch({
+          type: 'UPDATE_FIGHTER_STATE',
+          fighter: 'ai',
+          state: {
+            position: { ...state.aiFighter.position, x: newAiX },
+            facingRight: newAiX < state.playerFighter.position.x,
+          },
+        });
+
+        // AI combat decisions
         if (aiDecisionTimerRef.current >= aiReactionDelayRef.current) {
-          // AI makes a decision
           const aiDecision = getAiAction(
             state.aiFighter,
             state.playerFighter,
@@ -195,30 +266,33 @@ export default function BattleScreen({ gameData }: BattleScreenProps) {
                 state: { specialCooldown: state.aiFighter.character.specialCooldown },
               });
             }
-          } else if (aiDecision.action === 'IDLE') {
-            // Move toward/away from player
-            const movement = getAiMovement(state.aiFighter, state.playerFighter);
-            if (movement.direction !== 'none') {
-              const newX =
-                movement.direction === 'left'
-                  ? Math.max(100, state.aiFighter.position.x - movement.speed)
-                  : Math.min(1200, state.aiFighter.position.x + movement.speed);
-
-              dispatch({
-                type: 'UPDATE_FIGHTER_STATE',
-                fighter: 'ai',
-                state: {
-                  position: { ...state.aiFighter.position, x: newX },
-                  facingRight: newX < state.playerFighter.position.x,
-                },
-              });
-            }
           }
 
           // Reset decision timer with new random delay
           aiDecisionTimerRef.current = 0;
           aiReactionDelayRef.current = getAiReactionDelay(gameData.combatConfig);
         }
+
+        // Apply physics to AI fighter
+        const GRAVITY = -0.8; // Negative pulls toward ground (y=0)
+        const GROUND_Y = 0;
+
+        let aiVelocityY = state.aiFighter.velocity.y + GRAVITY;
+        let aiY = state.aiFighter.position.y + aiVelocityY;
+
+        if (aiY <= GROUND_Y) {
+          aiY = GROUND_Y;
+          aiVelocityY = 0;
+        }
+
+        dispatch({
+          type: 'UPDATE_FIGHTER_STATE',
+          fighter: 'ai',
+          state: {
+            position: { ...state.aiFighter.position, y: aiY },
+            velocity: { ...state.aiFighter.velocity, y: aiVelocityY },
+          },
+        });
       }
 
       // Process combat - check for hits

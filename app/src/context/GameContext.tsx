@@ -32,6 +32,7 @@ function createFighterState(character: Character, facingRight: boolean, x: numbe
     health: character.health,
     maxHealth: character.health,
     position: { x, y: 0 },
+    velocity: { x: 0, y: 0 },
     currentAction: 'IDLE',
     actionTimer: 0,
     specialCooldown: 0,

@@ -145,31 +145,39 @@ export function getAiAction(
 export function getAiMovement(
   aiState: FighterState,
   playerState: FighterState
-): { direction: 'left' | 'right' | 'none'; speed: number } {
+): { direction: 'left' | 'right' | 'none'; speed: number; shouldJump: boolean } {
   const distance = Math.abs(aiState.position.x - playerState.position.x);
-  const DESIRED_RANGE = 70; // Slightly closer than attack range
-  const MOVE_SPEED = 2;
+  const DESIRED_RANGE = 80; // Attack range
+  const MOVE_SPEED = 3.5; // Match player speed, slightly faster
 
-  // If too far, move toward player
+  // Random jump chance when moving (10%)
+  const shouldJump = Math.random() < 0.1 && aiState.position.y === 0;
+
+  // If too far, move toward player aggressively
   if (distance > DESIRED_RANGE) {
     if (aiState.position.x < playerState.position.x) {
-      return { direction: 'right', speed: MOVE_SPEED };
+      return { direction: 'right', speed: MOVE_SPEED, shouldJump };
     } else {
-      return { direction: 'left', speed: MOVE_SPEED };
+      return { direction: 'left', speed: MOVE_SPEED, shouldJump };
     }
   }
 
-  // If too close, back away slightly
-  if (distance < 40) {
+  // If too close, back away
+  if (distance < 50) {
     if (aiState.position.x < playerState.position.x) {
-      return { direction: 'left', speed: MOVE_SPEED * 0.5 };
+      return { direction: 'left', speed: MOVE_SPEED * 0.7, shouldJump: false };
     } else {
-      return { direction: 'right', speed: MOVE_SPEED * 0.5 };
+      return { direction: 'right', speed: MOVE_SPEED * 0.7, shouldJump: false };
     }
   }
 
-  // Good distance, stay put
-  return { direction: 'none', speed: 0 };
+  // In good range, randomly strafe or stay (50% chance to move)
+  if (Math.random() < 0.5) {
+    const direction = Math.random() < 0.5 ? 'left' : 'right';
+    return { direction, speed: MOVE_SPEED * 0.5, shouldJump };
+  }
+
+  return { direction: 'none', speed: 0, shouldJump: false };
 }
 
 /**
