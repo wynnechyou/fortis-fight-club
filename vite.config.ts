@@ -2,9 +2,9 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   root: "app",
-  base: "/fortis-fight-club/",
+  base: command === 'build' ? "/fortis-fight-club/" : "/",
   plugins: [react()],
   publicDir: "../data",
   resolve: {
@@ -16,4 +16,4 @@ export default defineConfig({
     outDir: "../dist",
     emptyOutDir: true,
   },
-});
+}));
