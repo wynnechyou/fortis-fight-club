@@ -1,0 +1,10 @@
+key,value
+screen_shake_intensity,8
+screen_shake_duration_ms,200
+damage_flash_duration_ms,150
+damage_flash_color,#ff0000
+particle_count_hit,8
+particle_count_special,15
+health_bar_transition_ms,300
+idle_animation_speed_ms,500
+attack_animation_speed_ms,100

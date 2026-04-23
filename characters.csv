@@ -1,0 +1,6 @@
+id,name,health,sprite,special_name,special_damage,special_cooldown,attack_damage
+wynne,Wynne,100,sprites_wynne5.png,Power Move,25,5000,10
+calvin,Calvin,100,sprites_calvin5.png,Deploy Bug,25,5000,10
+steven,Steven,100,sprites_steve5.png,Sync Call,20,4000,10
+shawn,Shawn,100,sprites_shawn5.png,Schedule Meeting,30,6000,10
+jing,Jing,100,sprites_jing5.png,Slack @channel,28,4500,10

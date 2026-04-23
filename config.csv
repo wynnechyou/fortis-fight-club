@@ -1,0 +1,7 @@
+key,value
+app_name,Fortis Fight Club
+base_hp,100
+ai_reaction_delay_ms,500
+block_damage_reduction,0.5
+screen_shake_intensity,8
+hit_flash_duration_ms,200
